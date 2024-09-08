@@ -167,6 +167,67 @@ By the completion of this project, I will have:
     <img width="940" alt="image" src="https://github.com/user-attachments/assets/1d88e123-6aac-4e67-be8d-cf6e44e72698">
 
 
+-----------------------------------------------------------------------------------------------------------------------------------------
+## Explanation of the Config:
+   server { ... }: This block defines the settings for a server.
+
+   listen 80;: This means that the server is listening on port 80, which is the default port for HTTP traffic.
+
+  server_name 52.203.21.252;: This is the server's domain name or IP address. In this case, you're using the IP address 52.203.21.252, but you can replace it with your actual domain name if you have one.
+
+  Location Block
+  location / { ... }: This block defines what Nginx should do when the root URL / is accessed.
+
+  proxy_pass http://gotibucket123.s3-website-us-east-1.amazonaws.com;: This tells Nginx to pass all traffic to the URL you provided, which is an Amazon S3 bucket that has static website hosting enabled. 
+  
+  When users visit your server's IP or domain, Nginx will fetch content from the S3 bucket and serve it.
+
+  proxy_set_header Host gotibucket123.s3-website-us-east-1.amazonaws.com;: This sets the Host header in the request, which ensures that the proper host header is sent to the S3 bucket.
+
+  proxy_set_header X-Real-IP $remote_addr;: This forwards the real IP address of the client to the S3 bucket, useful for logging or tracking.
+
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;: This forwards the original client IP addresses when your server is acting as a reverse proxy.
+
+  proxy_set_header X-Forwarded-Proto $scheme;: This header passes the protocol (http or https) used by the client to the S3 bucket.
+
+
+  # Note!
+  To configure Nginx so that you can access the S3 bucket both via http://<IP-address>/bucket-name/ and http://<IP-address>/, you will need two location blocks. One will handle the root (/), and the other 
+  
+  will handle requests to /bucket-name/.
+
+  Here's an updated version of the Nginx configuration to meet the requirement :
+
+
+  ```
+              server {
+              listen 80;
+              server_name 52.203.21.252;  # Replace with your domain name or server IP address
+          
+              # Handle requests to the root (http://<IP-address>)
+              location / {
+                  proxy_pass http://gotibucket123.s3-website-us-east-1.amazonaws.com/;  # S3 bucket URL
+                  proxy_set_header Host gotibucket123.s3-website-us-east-1.amazonaws.com;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          
+              # Handle requests to http://<IP-address>/bucket-name/
+              location /bucket-name/ {
+                  proxy_pass http://gotibucket123.s3-website-us-east-1.amazonaws.com/;  # S3 bucket URL
+                  proxy_set_header Host gotibucket123.s3-website-us-east-1.amazonaws.com;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+
+
+  ```
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
 3. Note that by default, nginx keeps its configuration files in _**/etc/nginx/sites-available**_ but it uses the file in the _**/etc/nginx/sites-enabled/**_.
    We need to create a symbolic link between _**sites-available**_ and _**sites-enabled**_ so that the new configuration file we created for our static website
    in _**sites-available**_ folder can be used by nginx in _**sites-enabled**_ folder.
@@ -222,24 +283,37 @@ By the completion of this project, I will have:
 
 1. Direct application access
 
-   * Access the application hosted on the EC2 instance directly through the Elastic IP to confirm it's running as expected.
+* Access the application hosted on the EC2 instance directly through the Elastic IP to confirm it's running as expected.
     
        
-   * Verify that the application responds to requests and functions correctly without any reverse proxy interference.
+* Verify that the application responds to requests and functions correctly without any reverse proxy interference.
   
 
    
-     <img width="588" alt="image" src="https://github.com/user-attachments/assets/c1fabdd5-fc8a-4ec1-a973-0c5548ec18f6">
+  <img width="588" alt="image" src="https://github.com/user-attachments/assets/c1fabdd5-fc8a-4ec1-a973-0c5548ec18f6">
 
 
 2. S3 Bucket Access via Reverse Proxy:
-   * Attempt to access the S3 bucket content by navigating to **<IP-address>/bucket-name_**.
+* Attempt to access the S3 bucket content by navigating to **<IP-address>/bucket-name_**.
      
-   * Check that the reverse proxy correctly routes the request to the S3 bucket and that the content is served without any issues.
+* Check that the reverse proxy correctly routes the request to the S3 bucket and that the content is served without any issues.
   
      
+# Validation Points:
+
+* Consistency in Access: Confirm that the Elastic IP remains stable across reboots, eliminating the need to adjust access configurations frequently.
   
-   
+
+*  Unified Endpoint Functionality: Ensure that the unified access point reliably routes traffic to both the EC2 application and the S3 bucket based on the request path.
+
+
+#  Conclusion
+
+
+Completing this project marks a significant milestone in understanding and implementing a unified access architecture using AWS services. By integrating EC2 and S3 with a reverse proxy, We've created a flexible and scalable infrastructure capable of supporting Zappy e-Bank's dynamic financial services.
+
+ 
+
 
     
    
